@@ -21,4 +21,8 @@ export interface Activity {
 
 export interface LocalizedActivity extends Omit<Activity, 'translations' | 'slug'>, ActivityTranslation {
   slug: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  canonical?: string;
+  index: boolean;
 }

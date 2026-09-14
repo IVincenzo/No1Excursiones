@@ -29,10 +29,10 @@ for (const activity of activities) {
       _status: 'published' as const,
     };
     if (!id) {
-      const created = await payload.create({collection: 'activities', locale, data});
+      const created = await payload.create({collection: 'activities', locale, data, context: {skipRevalidation: true}});
       id = created.id;
     } else {
-      await payload.update({collection: 'activities', id, locale, data});
+      await payload.update({collection: 'activities', id, locale, data, context: {skipRevalidation: true}});
     }
   }
   payload.logger.info(`Imported legacy activity: ${activity.code}`);

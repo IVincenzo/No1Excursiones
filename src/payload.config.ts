@@ -19,7 +19,7 @@ export default buildConfig({
   admin: {user: Users.slug, importMap: {baseDir: path.resolve(dirname)}},
   editor: lexicalEditor(),
   collections: [Users, Media, Activities, Categories, Destinations, Providers, Events, Guides, Bookings, Payments, ProcessedWebhookEvents],
-  localization: {locales: ['en','es','fr','de'], defaultLocale: 'en', fallback: true},
+  localization: {locales: ['en','es','fr','de'], defaultLocale: 'en', fallback: false},
   db: postgresAdapter({pool: {connectionString: process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/no1_excursiones'}}),
   typescript: {outputFile: path.resolve(dirname, 'payload-types.ts')},
 });

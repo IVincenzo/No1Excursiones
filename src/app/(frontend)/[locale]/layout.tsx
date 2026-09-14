@@ -2,6 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '@/styles/legacy.css';
 import '@/styles/app.css';
 import type {ReactNode} from 'react';
+import type {Metadata} from 'next';
 import {notFound} from 'next/navigation';
 import {NextIntlClientProvider} from 'next-intl';
 import {setRequestLocale} from 'next-intl/server';
@@ -11,6 +12,10 @@ import {WhatsAppWidget} from '@/components/layout/WhatsAppWidget';
 import {BootstrapClient} from '@/components/common/BootstrapClient';
 import {dictionary} from '@/lib/content/messages';
 import {isLocale, locales} from '@/i18n/config';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+};
 
 export function generateStaticParams() {
   return locales.map((locale) => ({locale}));
@@ -37,4 +42,3 @@ export default async function LocaleLayout({children, params}: {children: ReactN
     </html>
   );
 }
-

@@ -1,13 +1,15 @@
 import type {CollectionConfig, Field} from 'payload';
 import {authenticated, publishedOrAuthenticated} from './access';
+import {revalidateAfterChange, revalidateAfterDelete} from '@/lib/content/revalidation';
 
 const commonAccess = {read: publishedOrAuthenticated, create: authenticated, update: authenticated, delete: authenticated};
+const contentHooks = {afterChange: [revalidateAfterChange], afterDelete: [revalidateAfterDelete]};
 const versions = {drafts: {autosave: true}} as const;
 const slugFields: Field[] = [{name: 'slug', type: 'text', localized: true, required: true, index: true}, {name: 'title', type: 'text', localized: true, required: true}];
 const seoFields: Field = {name: 'seo', type: 'group', fields: [{name: 'title', type: 'text', localized: true}, {name: 'description', type: 'textarea', localized: true, maxLength: 170}, {name: 'canonical', type: 'text', localized: true}, {name: 'index', type: 'checkbox', defaultValue: true}]};
 
 function directoryCollection(slug: 'categories' | 'destinations' | 'providers'): CollectionConfig {
-  return {slug, admin: {useAsTitle: 'name'}, access: commonAccess, versions, fields: [
+  return {slug, admin: {useAsTitle: 'name'}, access: commonAccess, versions, hooks: contentHooks, fields: [
     {name: 'code', type: 'text', unique: true, required: true, index: true},
     {name: 'name', type: 'text', localized: true, required: true},
     {name: 'slug', type: 'text', localized: true, required: true, index: true},
@@ -21,6 +23,7 @@ export const Providers = directoryCollection('providers');
 
 export const Activities: CollectionConfig = {
   slug: 'activities', admin: {useAsTitle: 'code'}, access: commonAccess, versions,
+  hooks: contentHooks,
   fields: [
     {name: 'code', type: 'text', unique: true, required: true, index: true}, ...slugFields,
     {name: 'shortDescription', type: 'textarea', localized: true, required: true},
@@ -43,5 +46,5 @@ export const Activities: CollectionConfig = {
   ],
 };
 
-export const Events: CollectionConfig = {slug: 'events', admin: {useAsTitle: 'title'}, access: commonAccess, versions, fields: [...slugFields, {name: 'description', type: 'textarea', localized: true, required: true}, {name: 'startsAt', type: 'date', required: true}, {name: 'endsAt', type: 'date'}, {name: 'location', type: 'text'}, {name: 'isVerified', type: 'checkbox', defaultValue: false}, seoFields]};
-export const Guides: CollectionConfig = {slug: 'guides', admin: {useAsTitle: 'title'}, access: commonAccess, versions, fields: [...slugFields, {name: 'excerpt', type: 'textarea', localized: true}, {name: 'body', type: 'richText', localized: true, required: true}, {name: 'heroImage', type: 'upload', relationTo: 'media'}, seoFields]};
+export const Events: CollectionConfig = {slug: 'events', admin: {useAsTitle: 'title'}, access: commonAccess, versions, hooks: contentHooks, fields: [...slugFields, {name: 'description', type: 'textarea', localized: true, required: true}, {name: 'startsAt', type: 'date', required: true}, {name: 'endsAt', type: 'date'}, {name: 'location', type: 'text'}, {name: 'isVerified', type: 'checkbox', defaultValue: false}, seoFields]};
+export const Guides: CollectionConfig = {slug: 'guides', admin: {useAsTitle: 'title'}, access: commonAccess, versions, hooks: contentHooks, fields: [...slugFields, {name: 'excerpt', type: 'textarea', localized: true}, {name: 'body', type: 'richText', localized: true, required: true}, {name: 'heroImage', type: 'upload', relationTo: 'media'}, seoFields]};

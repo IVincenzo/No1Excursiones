@@ -6,8 +6,7 @@ import {ContactPage} from '@/components/pages/ContactPage';
 import {EventsPage} from '@/components/pages/EventsPage';
 import {TripPage} from '@/components/pages/TripPage';
 import {ActivityPage} from '@/components/pages/ActivityPage';
-import {activities} from '@/data/legacy/activities';
-import {getActivityBySlug} from '@/lib/content/activities';
+import {getActivities, getActivityBySlug, getActivityLocalizedPaths} from '@/lib/content/activities';
 import {dictionary} from '@/lib/content/messages';
 import {isLocale, localizedPath, paths, type Locale, type PageKey} from '@/i18n/config';
 
@@ -23,31 +22,36 @@ async function resolve(locale: Locale, segments: string[] = []) {
   return null;
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const result: {locale: Locale; segments?: string[]}[] = [];
   for (const locale of ['en','es','fr','de'] as const) {
     result.push({locale});
     for (const key of ['about','contact','events','trip'] as const) result.push({locale, segments: [paths[key][locale]]});
-    for (const activity of activities) result.push({locale, segments: [paths.activities[locale], activity.slug[locale]]});
+    for (const activity of await getActivities(locale)) result.push({locale, segments: [paths.activities[locale], activity.slug]});
   }
   return result;
 }
 
-function alternates(page?: PageKey, activityCode?: string) {
-  return Object.fromEntries((['en','es','fr','de'] as const).map((locale) => {
-    const activity = activityCode ? activities.find((item) => item.code === activityCode) : undefined;
-    const url = activity ? `${localizedPath(locale,'activities')}/${activity.slug[locale]}` : localizedPath(locale,page);
-    return [locale, url];
-  }));
+function pageAlternates(page?: PageKey) {
+  return Object.fromEntries((['en','es','fr','de'] as const).map((locale) => [locale, localizedPath(locale,page)]));
+}
+
+async function activityAlternates(code: string) {
+  const slugs = await getActivityLocalizedPaths(code);
+  return Object.fromEntries(Object.entries(slugs).map(([locale, slug]) => [locale, `${localizedPath(locale as Locale,'activities')}/${slug}`]));
 }
 
 export async function generateMetadata({params}: Props): Promise<Metadata> {
   const {locale: rawLocale, segments} = await params; if (!isLocale(rawLocale)) return {};
   const locale = rawLocale; const t = dictionary(locale); const page = await resolve(locale, segments);
   if (!page) return {};
-  if (page.type === 'activity') return {title: `${page.activity.title} | No1 Excursiones`, description: page.activity.summary, alternates: {canonical: `${localizedPath(locale,'activities')}/${page.activity.slug}`, languages: alternates('activities',page.activity.code)}, openGraph: {title: page.activity.title, description: page.activity.summary, images: [page.activity.image]}};
+  if (page.type === 'activity') {
+    const title = page.activity.seoTitle ?? `${page.activity.title} | No1 Excursiones`;
+    const description = page.activity.seoDescription ?? page.activity.summary;
+    return {title, description, robots: {index: page.activity.index, follow: page.activity.index}, alternates: {canonical: page.activity.canonical ?? `${localizedPath(locale,'activities')}/${page.activity.slug}`, languages: await activityAlternates(page.activity.code)}, openGraph: {title, description, images: [page.activity.image]}};
+  }
   const key = page.type === 'home' ? 'home' : page.type; const pageKey = page.type === 'home' ? undefined : page.type as PageKey;
-  return {title: t[`${key}Title`], description: t[`${key}Meta`], alternates: {canonical: localizedPath(locale,pageKey), languages: alternates(pageKey)}};
+  return {title: t[`${key}Title`], description: t[`${key}Meta`], alternates: {canonical: localizedPath(locale,pageKey), languages: pageAlternates(pageKey)}};
 }
 
 export default async function LocalizedPage({params}: Props) {

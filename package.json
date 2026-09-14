@@ -16,7 +16,8 @@
     "test:e2e": "playwright test",
     "legacy:extract": "node scripts/extract-legacy.mjs",
     "payload": "payload",
-    "payload:import": "tsx --env-file=.env.local scripts/import-legacy.ts"
+    "payload:import": "tsx --env-file=.env.local scripts/import-legacy.ts",
+    "payload:validate": "tsx --env-file=.env.local scripts/validate-payload.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",

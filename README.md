@@ -34,10 +34,13 @@ docker compose up -d postgres
 pnpm payload migrate:create
 pnpm payload migrate
 pnpm payload:import
+pnpm payload:validate
 pnpm dev
 ```
 
-The admin is at `/admin`. The idempotent import matches the stable activity `code`, imports all four translations, leaves unavailable business fields empty and sets legacy SEO indexing off. Fictional events are never imported.
+The admin is at `/admin`. The idempotent import matches the stable activity `code`, imports all four translations, leaves unavailable business fields empty and sets legacy SEO indexing off. Fictional events are never imported. `payload:validate` performs a reversible draft/publish/restore check and verifies that an absent translation never falls back to another language.
+
+Published activity edits made through Payload invalidate the public pages and sitemap. Localized activity links, language switching, canonical metadata and hreflang are resolved from the active content source rather than from hard-coded fixture slugs.
 
 For serverless PostgreSQL, use a pooler URL at runtime and the provider's direct URL for migrations. Development uploads use disk; Vercel needs persistent object storage (the environment contract reserves Vercel Blob variables).
 

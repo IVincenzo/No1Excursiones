@@ -36,6 +36,7 @@ export function getActivities(locale: Locale): LocalizedActivity[] {
     ...activity,
     slug: activity.slug[locale],
     ...activity.translations[locale],
+    index: true,
   }));
 }
 
@@ -46,4 +47,3 @@ export function getActivityBySlug(locale: Locale, slug: string): LocalizedActivi
 export function getActivityByCode(locale: Locale, code: string): LocalizedActivity | undefined {
   return getActivities(locale).find((activity) => activity.code === code);
 }
-
