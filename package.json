@@ -16,7 +16,7 @@
     "test:e2e": "playwright test",
     "legacy:extract": "node scripts/extract-legacy.mjs",
     "payload": "payload",
-    "payload:import": "tsx scripts/import-legacy.ts"
+    "payload:import": "tsx --env-file=.env.local scripts/import-legacy.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",
@@ -31,6 +31,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "server-only": "0.0.1",
+    "sharp": "0.34.3",
     "stripe": "18.5.0",
     "zod": "4.1.5"
   },

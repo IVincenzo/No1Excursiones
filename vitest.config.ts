@@ -5,5 +5,5 @@ import {fileURLToPath} from 'node:url';
 export default defineConfig({
   plugins: [react()],
   resolve: {alias: {'@': fileURLToPath(new URL('./src', import.meta.url))}},
-  test: {environment: 'jsdom', setupFiles: ['./vitest.setup.ts'], exclude: ['tests/e2e/**', 'node_modules/**']},
+  test: {environment: 'jsdom', setupFiles: ['./vitest.setup.ts'], exclude: ['tests/e2e/**', 'node_modules/**', '.next/**', 'public/**']},
 });
