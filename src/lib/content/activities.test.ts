@@ -1,104 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  getActivities,
-  getActivityByCode,
-  getActivityLocalizedPaths,
-} from "./activities";
+import {afterEach, describe, expect, it} from 'vitest';
+import {getActivities, getActivityByCode, getActivityLocalizedPaths} from './activities';
 
-const payloadMocks = vi.hoisted(() => ({
-  find: vi.fn(),
-  getPayload: vi.fn(),
-}));
+const originalSource = process.env.CONTENT_SOURCE;
 
-vi.mock("payload", () => ({
-  buildConfig: (config: unknown) => config,
-  getPayload: payloadMocks.getPayload,
-}));
-vi.mock("@/payload.config", () => ({ default: {} }));
-
-beforeEach(() => {
-  payloadMocks.find.mockReset();
-  payloadMocks.getPayload.mockResolvedValue({ find: payloadMocks.find });
+afterEach(() => {
+  if (originalSource === undefined) delete process.env.CONTENT_SOURCE;
+  else process.env.CONTENT_SOURCE = originalSource;
 });
 
-describe("activity content repository", () => {
-  it("maps published Payload documents to localized activities", async () => {
-    payloadMocks.find.mockResolvedValue({
-      docs: [
-        {
-          id: 1,
-          code: "boat-trips",
-          slug: "boat-trips",
-          title: "Boat trips",
-          shortDescription: "Sail Tenerife",
-          description: "A fuller description",
-          badge: "Sea",
-          duration: "3 hours",
-          images: [{ url: "/media/boat.jpg" }],
-          priceFromMinor: 5900,
-          currency: "EUR",
-          bookingProvider: "mock",
-          highlights: [{ item: "Small groups" }],
-          seo: {
-            title: "Boat trips SEO",
-            description: "Boat trips meta",
-            canonical: "/en/activities/boat-trips",
-            index: true,
-          },
-        },
-      ],
-    });
-
-    await expect(getActivities("en")).resolves.toEqual([
-      {
-        code: "boat-trips",
-        slug: "boat-trips",
-        image: "/media/boat.jpg",
-        priceFromMinor: 5900,
-        currency: "EUR",
-        bookingProvider: "mock",
-        title: "Boat trips",
-        badge: "Sea",
-        duration: "3 hours",
-        summary: "Sail Tenerife",
-        intro: "A fuller description",
-        highlights: ["Small groups"],
-        seoTitle: "Boat trips SEO",
-        seoDescription: "Boat trips meta",
-        canonical: "/en/activities/boat-trips",
-        index: true,
-      },
-    ]);
-    expect(payloadMocks.find).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: "activities", locale: "en" }),
-    );
+describe('activity content repository', () => {
+  it('uses the explicit static source with localized stable identities', async () => {
+    process.env.CONTENT_SOURCE = 'static';
+    expect(await getActivities('en')).toHaveLength(9);
+    expect((await getActivityByCode('fr', 'boat-trips'))?.slug).toBe('sorties-en-bateau');
+    expect(await getActivityLocalizedPaths('boat-trips')).toEqual({en: 'boat-trips', es: 'excursiones-en-barco', fr: 'sorties-en-bateau', de: 'bootsausfluege'});
   });
 
-  it("uses Payload per locale to resolve localized paths", async () => {
-    payloadMocks.find.mockImplementation(({ locale }) =>
-      Promise.resolve({
-        docs: [
-          {
-            code: "boat-trips",
-            slug: `${locale}-boat-trips`,
-            title: "Boat trips",
-            shortDescription: "Sail Tenerife",
-            description: "A fuller description",
-            images: [{ url: "/media/boat.jpg" }],
-            bookingProvider: "mock",
-          },
-        ],
-      }),
-    );
-
-    await expect(getActivityByCode("fr", "boat-trips")).resolves.toMatchObject({
-      slug: "fr-boat-trips",
-    });
-    await expect(getActivityLocalizedPaths("boat-trips")).resolves.toEqual({
-      en: "en-boat-trips",
-      es: "es-boat-trips",
-      fr: "fr-boat-trips",
-      de: "de-boat-trips",
-    });
+  it('rejects an unknown content source instead of falling back', async () => {
+    process.env.CONTENT_SOURCE = 'unknown';
+    await expect(getActivities('en')).rejects.toThrow('Unsupported CONTENT_SOURCE');
   });
 });

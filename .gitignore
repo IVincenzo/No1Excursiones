@@ -7,7 +7,6 @@ test-results/
 .env
 .env.local
 .env.*.local
-.env.example
 *.log
 .DS_Store
 media/

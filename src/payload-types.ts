@@ -69,7 +69,6 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
-    pages: Page;
     activities: Activity;
     categories: Category;
     destinations: Destination;
@@ -88,7 +87,6 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    pages: PagesSelect<false> | PagesSelect<true>;
     activities: ActivitiesSelect<false> | ActivitiesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     destinations: DestinationsSelect<false> | DestinationsSelect<true>;
@@ -202,73 +200,6 @@ export interface Media {
   };
 }
 /**
- * The five main website pages. Switch language at the top of the editor to update each translation.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages".
- */
-export interface Page {
-  id: number;
-  /**
-   * Only one entry can exist for each main page.
-   */
-  pageKey: 'home' | 'about' | 'contact' | 'events' | 'trip';
-  hero: {
-    eyebrow?: string | null;
-    title: string;
-    text: string;
-    image?: (number | null) | Media;
-  };
-  featureItems?:
-    | {
-        title: string;
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  primarySection?: {
-    kicker?: string | null;
-    title?: string | null;
-    lead?: string | null;
-    body?: string | null;
-  };
-  details?:
-    | {
-        label: string;
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
-  secondarySection?: {
-    kicker?: string | null;
-    title?: string | null;
-    text?: string | null;
-  };
-  cards?:
-    | {
-        title: string;
-        text: string;
-        buttonLabel: string;
-        target: 'activities' | 'trip' | 'contact';
-        id?: string | null;
-      }[]
-    | null;
-  cta?: {
-    kicker?: string | null;
-    title?: string | null;
-    text?: string | null;
-  };
-  seo?: {
-    title?: string | null;
-    description?: string | null;
-    canonical?: string | null;
-    index?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "activities".
  */
@@ -284,6 +215,10 @@ export interface Activity {
   destination?: (number | null) | Destination;
   provider?: (number | null) | Provider;
   images?: (number | Media)[] | null;
+  /**
+   * Temporary source URL; replace with an owned Media asset before production.
+   */
+  legacyImageUrl?: string | null;
   videos?:
     | {
         url: string;
@@ -459,9 +394,7 @@ export interface Booking {
   slotId: string;
   participants: number;
   status: 'pending_payment' | 'paid_pending_confirmation' | 'confirmed' | 'manual_review' | 'failed' | 'cancelled';
-  contactName: string;
   contactEmail: string;
-  idempotencyKey: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -522,10 +455,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
-      } | null)
-    | ({
-        relationTo: 'pages';
-        value: number | Page;
       } | null)
     | ({
         relationTo: 'activities';
@@ -672,77 +601,6 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pages_select".
- */
-export interface PagesSelect<T extends boolean = true> {
-  pageKey?: T;
-  hero?:
-    | T
-    | {
-        eyebrow?: T;
-        title?: T;
-        text?: T;
-        image?: T;
-      };
-  featureItems?:
-    | T
-    | {
-        title?: T;
-        text?: T;
-        id?: T;
-      };
-  primarySection?:
-    | T
-    | {
-        kicker?: T;
-        title?: T;
-        lead?: T;
-        body?: T;
-      };
-  details?:
-    | T
-    | {
-        label?: T;
-        value?: T;
-        id?: T;
-      };
-  secondarySection?:
-    | T
-    | {
-        kicker?: T;
-        title?: T;
-        text?: T;
-      };
-  cards?:
-    | T
-    | {
-        title?: T;
-        text?: T;
-        buttonLabel?: T;
-        target?: T;
-        id?: T;
-      };
-  cta?:
-    | T
-    | {
-        kicker?: T;
-        title?: T;
-        text?: T;
-      };
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        canonical?: T;
-        index?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "activities_select".
  */
 export interface ActivitiesSelect<T extends boolean = true> {
@@ -756,6 +614,7 @@ export interface ActivitiesSelect<T extends boolean = true> {
   destination?: T;
   provider?: T;
   images?: T;
+  legacyImageUrl?: T;
   videos?:
     | T
     | {
@@ -923,9 +782,7 @@ export interface BookingsSelect<T extends boolean = true> {
   slotId?: T;
   participants?: T;
   status?: T;
-  contactName?: T;
   contactEmail?: T;
-  idempotencyKey?: T;
   updatedAt?: T;
   createdAt?: T;
 }
