@@ -1,79 +1,53 @@
 # No1 Excursiones
 
-Progressive migration of the original Bootstrap prototype to a server-rendered booking platform for Tenerife. The original HTML/CSS/JavaScript implementation remains untouched at the repository root and is copied to `/legacy/index.html` for visual and functional comparison.
+Static Bootstrap website for a Tenerife tourism agency.
 
-## Stack and local setup
+## Open Locally
 
-Node.js 22, pnpm 11, Next.js 16 App Router, React 19, strict TypeScript, Bootstrap 5.3.3, `next-intl`, Payload CMS 3/PostgreSQL, Stripe's server SDK, Vitest and Playwright.
+Open `index.html` in a browser. The site uses Bootstrap and remote images through CDN URLs, so an internet connection is needed for the final visual styling and imagery.
 
-```bash
-corepack enable
-pnpm install
-cp .env.example .env.local
-pnpm dev
+## Structure
+
+- `index.html` - homepage
+- `local-events.html` - editable local events board
+- `plan-your-trip.html` - 15-minute call page
+- `about.html` - agency page
+- `contact.html` - contact form demo
+- `activities/` - one HTML page per activity category
+- `assets/css/styles.css` - custom responsive styles
+- `assets/js/api.js` - mock activity data, availability, and booking service
+- `assets/js/calendar.js` - calendar UI and booking interactions
+- `assets/js/events.js` - editable mock local events board
+- `assets/js/main.js` - shared navigation, footer, cards, Calendly fallback, forms
+
+## Calendly
+
+To connect the real 15-minute call scheduler, edit `plan-your-trip.html` and set:
+
+```html
+data-calendly-url="https://calendly.com/your-account/15min"
 ```
 
-Open `http://localhost:3000`. `/` negotiates `Accept-Language` and falls back to `/en`. The legacy reference is available at `/legacy/index.html` with `X-Robots-Tag: noindex, nofollow`.
+## Partner APIs
 
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm test:e2e
-```
+Replace the mock methods in `assets/js/api.js`:
 
-Playwright browsers require the separate command `pnpm exec playwright install chromium`.
+- `getAvailability(activitySlug)`
+- `createBooking(payload)`
 
-## Content and Payload
+The calendar and forms already call those methods, so partner API integration should not require rewriting the UI.
 
-`CONTENT_SOURCE=static` (default) runs without a database using the exact legacy fixtures. `CONTENT_SOURCE=payload` reads published localized documents through Payload's Local API. There is no automatic production fallback.
+## Languages
 
-```bash
-docker compose up -d postgres
-pnpm payload migrate:create
-pnpm payload migrate
-pnpm payload:import
-pnpm payload:validate
-pnpm dev
-```
+The site supports Spanish, English, French, and German through `assets/js/i18n.js`.
 
-The admin is at `/admin`. The idempotent import matches the stable activity `code`, imports all four translations, leaves unavailable business fields empty and sets legacy SEO indexing off. Fictional events are never imported. `payload:validate` performs a reversible draft/publish/restore check and verifies that an absent translation never falls back to another language.
+- Spanish is the default language.
+- The navbar language selector stores the visitor choice in `localStorage`.
+- A page can also be opened with `?lang=en`, `?lang=fr`, or `?lang=de`.
+- Activity translations live in `assets/js/api.js` because the activity pages and cards are rendered from shared activity data.
 
-Published activity edits made through Payload invalidate the public pages and sitemap. Localized activity links, language switching, canonical metadata and hreflang are resolved from the active content source rather than from hard-coded fixture slugs.
+## WhatsApp Widget
 
-For serverless PostgreSQL, use a pooler URL at runtime and the provider's direct URL for migrations. Development uploads use disk; Vercel needs persistent object storage (the environment contract reserves Vercel Blob variables).
+The floating WhatsApp widget is rendered from `assets/js/main.js` on every page.
 
-## Architecture
-
-```text
-Browser
-  -> Next.js pages, localized SEO and React islands
-      -> content repository -> static fixtures or Payload -> PostgreSQL
-      -> BookingService -> Mock / Manual / Bókun / FareHarbor / Rezdy
-      -> PaymentGateway -> Mock / Stripe
-```
-
-- `src/app/(frontend)/[locale]`: localized public site
-- `src/app/(payload)`: Payload admin/API
-- `src/components`: layout, pages, activities, events and booking UI
-- `src/data/legacy`: extracted activities, events and 165 messages × 4 languages
-- `src/lib/content`: explicit static/Payload data boundary
-- `src/lib/booking`: contract, validation, service and adapters
-- `src/lib/stripe`: server-only payment gateway
-- `src/collections`: editorial and private operational collections
-- `public/legacy`: preserved `noindex` reference
-
-## Booking and payments
-
-The browser only calls No1 endpoints. `BookingService` reloads the activity, selects its configured provider, rechecks availability and recalculates integer minor-unit prices. `MockBookingProvider` exposes deterministic 42-day availability; `ManualBookingProvider` returns pending manual confirmation. External adapters intentionally throw `ProviderNotConfiguredError` until credentials, commercial access, mappings and contract tests exist.
-
-`PAYMENT_MODE=mock` is the development default. Stripe code creates hosted Checkout sessions server-side with idempotency and verifies raw-body webhook signatures. Processed event IDs are unique private Payload records. Browser redirects never confirm a booking.
-
-Before enabling Stripe in production, finish and integration-test the fulfillment transaction: persist `pending_payment`, attach Checkout, transition to `paid_pending_confirmation`, create the supplier booking exactly once, then set `confirmed` or `manual_review`. The webhook currently verifies and deduplicates but deliberately does not invent supplier confirmation.
-
-## Environment and deployment guardrails
-
-`.env.example` lists every public and server-only variable without real secrets. Production needs real site/contact details, PostgreSQL, `PAYLOAD_SECRET`, `BOOKING_TOKEN_SECRET`, persistent media storage and configured providers. Do not deploy mock content, fictional events, placeholder contacts or Unsplash references as real business data.
-
-Root HTML files and `assets/` remain the reference. `pnpm legacy:extract` regenerates fixtures after an intentional legacy data edit. Historic `.html` routes redirect to Spanish by default and respect `?lang=en|es|fr|de`.
+To connect the real WhatsApp number, replace the placeholder `34000000000` in `renderWhatsAppWidget()`.
