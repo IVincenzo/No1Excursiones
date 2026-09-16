@@ -1,11 +1,10 @@
-'use client';
+"use client";
 
-import {useEffect} from 'react';
+import { useEffect } from "react";
 
 export function BootstrapClient() {
   useEffect(() => {
-    void import('bootstrap');
+    void import("bootstrap");
   }, []);
   return null;
 }
-

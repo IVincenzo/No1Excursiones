@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.0.0",
-  "engines": { "node": ">=22 <23" },
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
@@ -14,13 +16,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "legacy:extract": "node scripts/extract-legacy.mjs",
     "payload": "payload",
-    "payload:import": "tsx --env-file=.env.local scripts/import-legacy.ts",
+    "payload:importmap": "payload generate:importmap",
+    "payload:import-pages": "tsx --env-file=.env.local scripts/import-main-pages.ts",
+    "payload:migrate-media": "tsx --env-file=.env.local scripts/migrate-payload-media.ts",
     "payload:validate": "tsx --env-file=.env.local scripts/validate-payload.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/live-preview": "3.88.0",
     "@payloadcms/next": "3.88.0",
     "@payloadcms/payload-cloud": "3.88.0",
     "@payloadcms/richtext-lexical": "3.88.0",
@@ -54,6 +58,9 @@
     "vitest": "3.2.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "unrs-resolver"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 # No1 Excursiones
 
-Progressive migration of the original Bootstrap prototype to a server-rendered booking platform for Tenerife. The original HTML/CSS/JavaScript implementation remains untouched at the repository root and is copied to `/legacy/index.html` for visual and functional comparison.
+Next.js and Payload CMS booking platform for Tenerife excursions.
 
 ## Stack and local setup
 
@@ -13,7 +13,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Open `http://localhost:3000`. `/` negotiates `Accept-Language` and falls back to `/en`. The legacy reference is available at `/legacy/index.html` with `X-Robots-Tag: noindex, nofollow`.
+Open `http://localhost:3000`. `/` negotiates `Accept-Language` and falls back to `/en`.
 
 ```bash
 pnpm lint
@@ -27,20 +27,20 @@ Playwright browsers require the separate command `pnpm exec playwright install c
 
 ## Content and Payload
 
-`CONTENT_SOURCE=static` (default) runs without a database using the exact legacy fixtures. `CONTENT_SOURCE=payload` reads published localized documents through Payload's Local API. There is no automatic production fallback.
+Public content is served from Payload. Local development requires PostgreSQL and seeded or manually created Payload documents.
 
 ```bash
 docker compose up -d postgres
 pnpm payload migrate:create
+pnpm payload:migrate-media
 pnpm payload migrate
-pnpm payload:import
 pnpm payload:validate
 pnpm dev
 ```
 
-The admin is at `/admin`. The idempotent import matches the stable activity `code`, imports all four translations, leaves unavailable business fields empty and sets legacy SEO indexing off. Fictional events are never imported. `payload:validate` performs a reversible draft/publish/restore check and verifies that an absent translation never falls back to another language.
+The admin is at `/admin`. `payload:import-pages` creates or refreshes only the five editable main-page documents (`home`, `about`, `contact`, `events`, `trip`) in all four languages. Activities and local events are managed directly in Payload. `payload:migrate-media` is a one-time helper for existing databases that still have old image URL columns; run it before the cleanup migration. `payload:validate` performs a reversible draft/publish/restore check and verifies that an absent translation never falls back to another language.
 
-Published activity edits made through Payload invalidate the public pages and sitemap. Localized activity links, language switching, canonical metadata and hreflang are resolved from the active content source rather than from hard-coded fixture slugs.
+Main pages and activities expose Payload's Preview and Live Preview controls. The authenticated preview route enables Next.js draft mode, and autosave refreshes the embedded site without exposing draft content publicly. Published edits invalidate the public pages and sitemap. Localized activity links, language switching, canonical metadata and hreflang are resolved from the active content source rather than from hard-coded fixture slugs.
 
 For serverless PostgreSQL, use a pooler URL at runtime and the provider's direct URL for migrations. Development uploads use disk; Vercel needs persistent object storage (the environment contract reserves Vercel Blob variables).
 
@@ -49,7 +49,7 @@ For serverless PostgreSQL, use a pooler URL at runtime and the provider's direct
 ```text
 Browser
   -> Next.js pages, localized SEO and React islands
-      -> content repository -> static fixtures or Payload -> PostgreSQL
+      -> content repository -> Payload -> PostgreSQL
       -> BookingService -> Mock / Manual / Bókun / FareHarbor / Rezdy
       -> PaymentGateway -> Mock / Stripe
 ```
@@ -57,12 +57,11 @@ Browser
 - `src/app/(frontend)/[locale]`: localized public site
 - `src/app/(payload)`: Payload admin/API
 - `src/components`: layout, pages, activities, events and booking UI
-- `src/data/legacy`: extracted activities, events and 165 messages × 4 languages
-- `src/lib/content`: explicit static/Payload data boundary
+- `src/lib/content`: Payload-backed content readers
+- `src/i18n`: localized interface messages and route mappings
 - `src/lib/booking`: contract, validation, service and adapters
 - `src/lib/stripe`: server-only payment gateway
 - `src/collections`: editorial and private operational collections
-- `public/legacy`: preserved `noindex` reference
 
 ## Booking and payments
 
@@ -74,6 +73,6 @@ Before enabling Stripe in production, finish and integration-test the fulfillmen
 
 ## Environment and deployment guardrails
 
-`.env.example` lists every public and server-only variable without real secrets. Production needs real site/contact details, PostgreSQL, `PAYLOAD_SECRET`, `BOOKING_TOKEN_SECRET`, persistent media storage and configured providers. Do not deploy mock content, fictional events, placeholder contacts or Unsplash references as real business data.
+`.env.example` lists every public and server-only variable without real secrets. Production needs real site/contact details, PostgreSQL, `PAYLOAD_SECRET`, `BOOKING_TOKEN_SECRET`, persistent media storage and configured providers. Do not deploy mock bookings, placeholder contacts or Unsplash seed images as real business data.
 
-Root HTML files and `assets/` remain the reference. `pnpm legacy:extract` regenerates fixtures after an intentional legacy data edit. Historic `.html` routes redirect to Spanish by default and respect `?lang=en|es|fr|de`.
+Historic `.html` routes redirect to Spanish by default and respect `?lang=en|es|fr|de`.
